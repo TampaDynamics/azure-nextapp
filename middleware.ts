@@ -1,3 +1,4 @@
+// middleware.ts
 import { auth } from "@/lib/auth/auth";
 import { NextResponse } from "next/server";
 
@@ -7,32 +8,26 @@ const apiAuthPrefix = "/api/auth";
 
 export default auth(async (req) => {
   const { nextUrl } = req;
-  const authData = await req.auth;
-  const isLoggedIn = !!req.auth;
-
   const path = nextUrl.pathname;
-  const isApiAuthRoute = nextUrl.pathname.startsWith(apiAuthPrefix);
-  const isProtectedRoute = protectedRoutes.includes(path);
-  const isAuthPageRoute = authPageRoutes.includes(path);
 
-  console.log({ authData });
+  const isApiAuthRoute = path.startsWith(apiAuthPrefix);
+  if (isApiAuthRoute) return NextResponse.next();
 
-  if (isApiAuthRoute) {
-    return NextResponse.next();
+  // req.auth is a Session (or null) property, not a callable function — do not await/call it
+  const authData = req.auth;
+  const isLoggedIn = !!authData;
+
+  if (protectedRoutes.includes(path) && !isLoggedIn) {
+    return NextResponse.redirect(new URL("/login", nextUrl));
   }
 
-  if (isProtectedRoute && !isLoggedIn) {
-    return NextResponse.redirect(new URL("/login", req.nextUrl));
-  }
-
-  if (isLoggedIn && isAuthPageRoute) {
-    return NextResponse.redirect(new URL("/dashboard", req.nextUrl));
+  if (isLoggedIn && authPageRoutes.includes(path)) {
+    return NextResponse.redirect(new URL("/dashboard", nextUrl));
   }
 
   return NextResponse.next();
 });
 
-// Optionally, don't invoke Middleware on some paths
 export const config = {
   matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
 };
