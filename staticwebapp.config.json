@@ -1,18 +1,54 @@
 {
-    "routes": [
-      {
-        "route": "/api/*",
-        "methods": ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"]
-      },
-      {
-        "route": "/*",
-        "serve": "/index.html",
-        "statusCode": 200
+    "$schema": "https://staticwebapp.net/schema/staticwebapp.config.json",
+    "globalHeaders": {
+      "Content-Security-Policy": "default-src 'self'; img-src 'self' data: https:; font-src 'self' data: https:; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' https:; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self';",
+      "Referrer-Policy": "no-referrer",
+      "X-Content-Type-Options": "nosniff",
+      "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+      "Permissions-Policy": "geolocation=(), microphone=(), camera=(), payment=(), usb=()"
+    },
+  
+    "mimeTypes": {
+      ".json": "text/json"
+    },
+  
+    "auth": {
+      "identityProviders": {
+        "azureActiveDirectory": {
+          "registration": {
+            "openIdIssuer": "https://login.microsoftonline.com/367a251f-20ae-4514-8a15-ea4d7a470fd7/v2.0",
+            "clientIdSettingName": "AZURE_CLIENT_ID",
+            "clientSecretSettingName": "AZURE_CLIENT_SECRET"
+          }
+        }
       }
+    },
+  
+    "routes": [
+      { "route": "/login", "allowedRoles": ["anonymous"] },
+  
+      { "route": "/api/patients/*", "allowedRoles": ["authenticated"] },
+      { "route": "/api/*", "allowedRoles": ["authenticated"] },
+  
+      { "route": "/dashboard/*", "allowedRoles": ["authenticated"] },
+  
+      { "route": "/", "allowedRoles": ["anonymous"] }
     ],
+  
+    "responseOverrides": {
+      "401": {
+        "redirect": "/.auth/login/aad",
+        "statusCode": 302
+      },
+      "403": {
+        "rewrite": "/403",
+        "statusCode": 403
+      }
+    },
+  
     "navigationFallback": {
       "rewrite": "/index.html",
-      "exclude": ["/images/*.{png,jpg,jpeg}", "/*.{css,scss,js,png,gif,ico,jpg,svg}"]
+      "exclude": ["/api/*", "/.auth/*", "/favicon.ico", "/*.{js,css,png,jpg,gif,svg}"]
     }
   }
   
