@@ -1,7 +1,4 @@
 {
-  "navigationFallback": {
-    "rewrite": "/"
-  },
   "routes": [
     {
       "route": "/api/*",
